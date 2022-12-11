@@ -1,24 +1,145 @@
-import logo from './logo.svg';
-import './App.css';
+import styled from "styled-components";
+import axios from 'axios';
+import MovieComponent from './components/MovieComponent';
+import MovieInfoComponent from './components/MovieInfoComponent';
+import { useState } from 'react';
+
+export const API_KEY = "95a5ef4f";
+
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const Header = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  background-color: black;
+  color: white;
+  padding: 10px;
+  align-items: center;
+  font-size: 25px;
+  font-weight: bold;
+  box-shadow: 0 3px 6px 0 #555;
+
+`;
+
+const AppName = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const MovieImage = styled.img`
+  width: 48px;
+  height: 48px;
+  margin: 15px;
+`;
+
+const SearchBox= styled.div`
+  display: flex;
+  flex-direction: row;
+  padding: 10px 10px;
+  background-color: white;
+  border-radius: 6px;
+  margin-left: 20px;
+  width: 50%;
+  align-items: center;
+`;
+
+const SearchIcon = styled.img`
+  width: 32px;
+  height: 32px;
+`;
+
+const SearchInput = styled.input`
+  height: 30px;
+  color: black;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  outline: none;
+  margin-left: 15px;
+  width: 55%;
+`;
+
+const MovieListContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding: 30px;
+  gap: 25px;
+  justify-content: space-evenly;
+  gap: 24px;
+  
+`;
+
+const Placeholder = styled.img`
+  width: 120px;
+  height: 120px;
+  margin: 150px;
+  opacity: 50%;
+`;
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+  const [searchQuery, updateSearchQuery] = useState();
+  const [timeoutId, updateTimeoutId] = useState();
+  const [movieList, updateMovieList] = useState([]);
+  const [selectedMovie, onMovieSelect] = useState();
+
+  const fetchData = async(searchString) => {
+    const response = await axios.get(
+      `https://www.omdbapi.com/?s=${searchString}&apikey=${API_KEY}`
+    );
+    updateMovieList(response.data.Search)
+  };
+
+  const onTextChange  = (event) => {
+    clearTimeout(timeoutId);
+    updateSearchQuery(event.target.value);
+    const timeout = setTimeout(()=> fetchData(event.target.value), 500);
+    updateTimeoutId(timeout)
+  };
+  return ( 
+    <Container>
+      <Header>
+        <AppName>
+          <MovieImage src='/movie-icon.ico' />
+          React Movie App
+        </AppName>
+
+        <SearchBox>
+          <SearchIcon src='/icons8-search.svg' />
+          <SearchInput 
+           placeholder='Search Movie'
+           value={searchQuery}
+           onChange={onTextChange} 
+          />
+        </SearchBox>
+      </Header>
+
+      {selectedMovie && (
+        <MovieInfoComponent 
+          selectedMovie={selectedMovie} 
+          onMovieSelect={onMovieSelect} 
+        />
+      )}
+
+      <MovieListContainer>
+        {movieList?.length
+         ? movieList.map((movie, index) => (
+            <MovieComponent 
+             key={index} 
+             movie={movie}
+             onMovieSelect={onMovieSelect}
+            />
+          ))  : (
+            <Placeholder src="/movie-icon.ico" />
+          )}
+      </MovieListContainer>
+    </Container>
   );
 }
 
